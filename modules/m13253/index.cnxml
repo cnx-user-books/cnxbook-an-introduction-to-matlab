@@ -1,0 +1,214 @@
+<document xmlns="http://cnx.rice.edu/cnxml" xmlns:m="http://www.w3.org/1998/Math/MathML" xmlns:md="http://cnx.rice.edu/mdml">
+<title>Scripts and Functions in MATLAB</title>
+<metadata><md:content-id>undefined</md:content-id><md:title/><md:uuid>d901c7f0-2ef6-425d-bf0e-bbfb3bffae6b</md:uuid>
+</metadata>
+<content>
+<section id="id11814678">
+<title>Script files</title>
+<para id="id11814689">Script files, also called M- files as they
+have extension 
+<code>.m</code>, make MATLAB programming much more efficient than
+entering individual commands at the command prompt. A script file
+consists of MATLAB commands that together perform a specific task.
+The M-file is a text file which can be created and edited by any
+plain text editor like Notepad, emacs or the built-in MATLAB
+editor. To create a script in MATLAB use: 
+<code>File - New - M -File</code> from the menu. An example script
+is shown below.</para>
+<example id="ex1">
+	<para id="id11814734">Our first script.
+<code display="block" id="idm6109808">
+n = 0:pi/100:2*pi; %create an index vector
+y = cos(2*pi*n);   %create a vector y
+plot(n,y);         %plot y versus n
+</code>
+</para>
+</example>
+<para id="id11814786">As shown above the <code>%</code>-sign allows for comments. Saving the script as 
+<code>foo.m</code> it can be executed as <code>foo</code> from the command prompt or by clicking the run
+button in the MATLAB editor. Script files are very practical and should be the preferred alternative compared to the command prompt
+in most cases.</para>
+</section>
+<section id="id11814838">
+
+<!-- SECTION: PROGRAM FLOW -->
+<title>Program flow</title>
+<para id="id11814845">As in most programming languages program flow can be controlled by using statements such as 
+<code>for</code>, <code>while</code>, <code>if</code>, <code>else</code>, <code>elseif</code>, and <code>switch</code>. 
+These statements can be used both in M-files and at the command prompt, the latter being highly
+inconvenient. Below we show some examples. Use help to get more details.</para>
+
+<list list-type="bulleted" id="id11814914">
+	<item>
+		<code>for</code>- To print "Hello World" 10 times write
+<code display="block" id="idp232768">
+for n=1:10
+   disp('Hello World')
+end
+</code>
+<code>for</code> loops can in many cases be avoided by
+vectorizing your code, more about that <link target-id="m13251">later</link>.
+	</item>
+	<item>
+		<code>if</code>, <code>else</code>and <code>elseif</code> - Classics that never go out of style.
+<code display="block" id="idm6828576">
+if a == b
+   a = b + 1
+elseif a &gt; b
+   a = b - 1
+else
+   a = b
+end
+</code>
+</item>
+</list>
+</section>
+
+<!-- SECTION: User Defined Functions -->
+<section id="id11587320">
+<title>User Defined Functions</title>
+<para id="id11587327">Sometimes it is convenient to create your own
+functions for use in MATLAB. Functions are program routines,
+usually implemented in M-files. Functions can take input arguments
+and return output arguments. They operate on variables within their
+own workspace, separate from the workspace you access at the MATLAB
+command prompt.</para>
+
+<example id="ex2">
+	<para id="id11587348">Create a function for calculating the sum of
+	the <m:math><m:apply><m:plus/><m:ci>N</m:ci><m:cn>1</m:cn></m:apply></m:math> first terms of geometric series. 
+	Assume 
+	<m:math>
+		<m:apply>
+			<m:lt/>
+			<m:ci>N</m:ci>
+			<m:infinity/>
+		</m:apply>
+	</m:math>.
+	</para>
+	<para id="id11587386">Solution: The sum of the N + 1 terms of a geometric
+	series is given by 
+	<m:math>
+	<m:apply>
+		<m:eq/>
+		<m:ci>ssum</m:ci>
+		<m:apply>
+			<m:sum/>
+			<m:bvar><m:ci>n</m:ci></m:bvar>
+			<m:lowlimit><m:cn>0</m:cn></m:lowlimit>
+			<m:uplimit><m:ci>N</m:ci></m:uplimit>
+			<m:apply>
+			  <m:power/>
+				  <m:ci>a</m:ci>
+					<m:ci>n</m:ci>
+			</m:apply>
+	  </m:apply>
+	  </m:apply>
+	  </m:math>.
+	  An implementation of this sum as a 	function accepting the input arguments <m:math><m:ci>a</m:ci></m:math> and <m:math><m:ci>N</m:ci></m:math> is shown below.
+<code display="block" id="idm6233488">
+function ssum = geom(a,N)
+  n=0:N;
+  ssum = sum(a.^n);
+end
+</code>
+</para>
+<para id="id11587514">The function 
+<code>geom</code>can then be called, e.g from the command prompt.
+The function call <code> geom(0.9,10)</code>returns 6.8619.</para>
+</example>
+
+<para id="id11639201">To illustrate some more MATLAB programming we take on the task of
+creating a MATLAB function that will compute the sum of an arbitrary geometric series,
+	<m:math>
+	<m:apply>
+		<m:eq/>
+		<m:ci>ssum</m:ci>
+		<m:apply>
+			<m:sum/>
+			<m:bvar><m:ci>n</m:ci></m:bvar>
+			<m:lowlimit><m:cn>0</m:cn></m:lowlimit>
+			<m:uplimit><m:ci>N</m:ci></m:uplimit>
+			<m:apply>
+			  <m:power/>
+				  <m:ci>a</m:ci>
+					<m:ci>n</m:ci>
+			</m:apply>
+	  </m:apply>
+	  </m:apply>
+	  </m:math>.
+</para>
+<example id="ex3">
+<para id="id11501487">Create a function to calculate the sum of an
+arbitrary geometric series.</para>
+<para id="id11501499">Solution: For 
+<m:math>
+		<m:apply>
+			<m:lt/>
+			<m:ci>N</m:ci>
+			<m:infinity/>
+		</m:apply>
+	</m:math> 
+	we know that the sum converges regardless of <m:math><m:ci>a</m:ci></m:math>. 
+	As <m:math><m:ci>N</m:ci></m:math> goes to <m:math><m:infinity/></m:math> the sum converges only for
+	<m:math><m:apply><m:lt/><m:ci>a</m:ci><m:cn>1</m:cn></m:apply></m:math>, and the sum is given by the formula
+	<m:math>
+		<m:apply>
+			<m:eq/>
+			<m:apply>
+				<m:sum/>
+				<m:bvar><m:ci>n</m:ci></m:bvar>
+				<m:lowlimit><m:cn>0</m:cn></m:lowlimit>
+				<m:uplimit><m:infinity/></m:uplimit>
+				<m:apply>
+			  	<m:power/>
+					  <m:ci>a</m:ci>
+						<m:ci>n</m:ci>
+				</m:apply>
+	  	</m:apply>
+	  <m:apply>
+	  	<m:divide/>
+	  		<m:cn>1</m:cn>
+	  		<m:apply>
+	  			<m:minus/>
+	  			<m:cn>1</m:cn>
+	  			<m:ci>a</m:ci>
+	  		</m:apply>
+	  </m:apply>
+	  </m:apply>
+	</m:math>.
+A possible implementation is given as:
+
+<code display="block" id="idm7071344">
+function ssum = geomInf(a,N)
+   if(N==inf)
+      if(abs(a)&gt;=1)
+         error('This geometric series will diverge.');
+      else
+         ssum=1/(1-a);
+      end
+   else
+      n=0:N;
+      ssum = sum(a.^n);
+   end
+end
+</code>
+</para>
+</example>
+<para id="finalNote">
+Note that in the two examples above we could have used the formula for the sum of a finite geometric series. However we chose to create a vector and use the function <code>sum</code> to illustrate MATLAB concepts.
+</para>
+</section>
+<section id="learn">
+<title>Learn From Existing Code</title>
+<para id="pLearn">
+Wouldn't it be great to learn from the best? Using the command <code>type</code>
+followed by a function name the source code of the function is displayed.
+As the built in functions are written by people with excellent knowledge of
+MATLAB, this is a great feature for anyone interested in learning more
+about MATLAB.
+</para>
+</section>
+
+</content>
+</document>

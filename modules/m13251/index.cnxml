@@ -1,0 +1,90 @@
+<document xmlns="http://cnx.rice.edu/cnxml" xmlns:m="http://www.w3.org/1998/Math/MathML" xmlns:md="http://cnx.rice.edu/mdml">
+  <title>Vectorizing loops in MATLAB</title>
+  <metadata><md:content-id>undefined</md:content-id><md:title/><md:uuid>040f508b-1241-401a-9182-7a7f2cdc53ef</md:uuid>
+</metadata>
+<content>
+<section id="id31651512">
+<!--<name>Name</name>-->
+<para id="id31651519">In MATLAB one should try to avoid loops. This can be done by vectorizing your code. The idea is that MATLAB is very fast
+on vector and matrix operations and correspondingly slow with loops. We illustrate this by an example.</para>
+
+<example id="example1">
+	<para id="element-480">Given
+	<m:math>
+		<m:apply>
+			<m:eq/>
+			<m:ci><m:msub><m:mi>a</m:mi><m:mi>n</m:mi></m:msub></m:ci>
+			<m:ci>n</m:ci>
+		</m:apply>
+	</m:math>,
+	and
+	<m:math>
+		<m:apply>
+			<m:eq/>
+			<m:ci><m:msub><m:mi>b</m:mi><m:mi>n</m:mi></m:msub></m:ci>
+			<m:apply>
+				<m:minus/>
+				<m:cn>1000</m:cn>
+				<m:ci>n</m:ci>
+			</m:apply>
+		</m:apply>
+	</m:math>
+	for 
+	<m:math>
+		<m:apply>
+			<m:eq/>
+			<m:ci>n</m:ci>
+			<m:cn>1,...,1000</m:cn>
+		</m:apply>
+	</m:math>.
+	Calculate
+	<m:math>
+		<m:apply>
+				<m:sum/>
+				<m:bvar><m:ci>n</m:ci></m:bvar>
+				<m:lowlimit><m:cn>1</m:cn></m:lowlimit>
+				<m:uplimit><m:cn>1000</m:cn></m:uplimit>
+				<m:apply>
+			  	<m:times/>
+					<m:ci><m:msub><m:mi>a</m:mi><m:mi>n</m:mi></m:msub></m:ci>
+					<m:ci><m:msub><m:mi>b</m:mi><m:mi>n</m:mi></m:msub></m:ci> 
+				</m:apply>
+	   </m:apply>
+	 </m:math>,
+	 and store in the variable <code>ssum</code>.</para>
+	 <para id="exsol1">Solution:
+	 It might be tempting to implement the above calculation as
+<code display="block" id="idm1615984">
+a = 1:1000;
+b = 1000 - a;
+ssum=0;
+for n=1:1000 %poor style...
+   ssum = ssum +a(n)*b(n);
+end
+</code>
+Recognizing that the sum is the inner product of the vectors <m:math><m:ci>a</m:ci></m:math> and <m:math><m:ci>b</m:ci></m:math>,
+<m:math>
+	<m:apply>
+		<m:times/>
+		<m:ci>a</m:ci>
+		<m:apply>
+			<m:power/>
+			<m:ci>b</m:ci>
+			<m:ci>T</m:ci>
+		</m:apply>
+	</m:apply>
+</m:math>, we can do better:
+<code display="block" id="idm1071440">
+ssum = a*b' %Vectorized, better!
+</code>
+</para></example>
+<para id="finalNote">
+For more detailed information on vectorization, please take a look at MathWorks'
+<link url="http://www.mathworks.com/support/tech-notes/1100/1109.html">Code Vectorization Guide</link>.
+</para>
+
+
+</section>
+</content>
+  
+</document>

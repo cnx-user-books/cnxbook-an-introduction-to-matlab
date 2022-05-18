@@ -1,0 +1,310 @@
+<document xmlns="http://cnx.rice.edu/cnxml" xmlns:md="http://cnx.rice.edu/mdml">
+  <title>Writing C Functions in MATLAB (MEX-Files)</title>
+  <metadata><md:content-id>undefined</md:content-id><md:title/><md:uuid>15601bc4-3cda-4964-a7e4-5e061c8aa8b7</md:uuid>
+</metadata>
+
+  <content>
+    <section id="intro">
+        <title>Introduction</title>
+        <para id="para0">
+            The MATLAB M-File is very good for putting together functions or scripts that run many of MATLAB's
+            fast Built-In functions. One nice thing about these files is that they are never compiled and will run on
+            any system that is already running MATLAB. MATLAB achieves this by interpreting each line of the M-File
+            every time it is run.  This method of running the code can make processing time very slow for
+            large and complicated functions, especially those with many loops because every line within the loop will
+            be interpreted as a new line, each time through the loop.  Good MATLAB code avoids these things by using
+            as many Built-In features and array operations as possible (because these are fast and efficient).  
+            Sometimes this is not enough...
+        </para>
+        <para id="para1">
+            MATLAB has the capability of running functions written in C.
+            The files which hold the source for these functions are called MEX-Files. The mexFunctions are not intended to be a
+            substitue for MATLAB's Built-In operations however if you need to code many loops and
+            other things that MATLAB is not very good at, this is a good option.  This feature also allows
+            system-specific APIs to be called to extend MATLAB's abilities (see the Serial Port Tutorial for
+            an example of this).
+        </para>
+        <para id="para2">
+            This document is arranged in the following manner:
+            <list id="list1" list-type="bulleted">
+            <item>The MEX-Function: Interface to MATLAB</item>
+            <item>Getting and Creating Data</item>
+            <item>Calling Built-In Functions from a MEX-File</item>
+            <item>Compiling</item>
+            <item>Useful Functions not Mentioned Here</item>
+            </list>
+            These are some of the basic topics that will allow you to create a MEX-file in a short time.  There
+            are many other features and abilities that MATLAB has which can be explored in the MATLAB
+            documentation.
+        </para>
+    </section> 
+    <section id="idp493584">
+        <title>The MEX-Function: Interface to MATLAB</title>
+        <para id="para3">
+            When writing programs in C, it is always assumed that the program will start execution from the main().
+            MEX -Files are similar in that they always start execution from a special function called the mexFunction.
+            This function has return type void and is the "gateway" between the MATLAB function call, and your C code.
+        </para>
+        <example id="ex1">
+        <code display="block" id="idm6910976">
+//You can include any C libraries that you normally use
+#include "math.h"
+#include "mex.h"   //--This one is required
+
+void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
+{
+    //All code and internal function calls go in here!
+    
+    return;
+}
+        </code>
+        </example>
+        <para id="para4">
+            In order to make a mex-function, you must include the "mex.h" library.  This library contains
+            all of the APIs that MATLAB provides.  There are four input parameters to the mexFunction which
+            correspond to the way a function is called in MATLAB - (ex: <code>[z0,z1] = jasonsFunction(x,y,z);</code>) 
+        </para>
+        <list id="list2">
+            <item><code>nlhs</code> (Type = int): This paramter represents the number of "left hand side" arguments. So in my example
+                function call, nlhs = 2 (the outputs are z0 and z1).</item>
+            <item><code>plhs</code> (Type = array of pointers to mxArrays): This parameter is the actual output arguments.  As we will see
+                later, an mxArray is MATLAB's structure for holding data and each element in plhs holds an mxArray of data.</item>
+            <item><code>nrhs</code> (Type = int): Similar to nlhs, this paramter holds the number of "right hand side" arguments.</item>
+            <item><code>prhs</code> (Type = const array of pointers to mxArrays): This array hold all of the pointers to the mxArrays of input data
+                for instance, prhs[0] holds the mxArray containing x, prhs[1] holds the mxArray containing y, etc).</item>
+        </list>
+    </section>
+    <section id="idm6867744">
+        <title>Getting and Creating Data</title>
+        <para id="para5">
+            The main MATLAB structure used for holding data in MEX-Files is the mxArray.  This structure can hold
+            real data, complex data, arrays, matrices, sparse-arrays, strings, and a whole host of other MATLAB data-structures.
+            Using data from some of the basic structures is shown here, but refer to the MATLAB help for using 
+            other data structures.
+        </para>
+        <section id="idm7085104">
+            <title>Get that Data</title>
+            <para id="para6">
+                Lets use my example from above (if you forgot: <code>[z0,z1] = jasonsFunction(x,y,z);</code>). 
+                Assume that x is a 2-D matrix, y is a string, and z is an integer.  Here we wills ee how to extract
+                and use these different types of data.
+            </para>
+            <para id="para7">
+                We have access to the input paramter x by a pointer held in the array prhs.  In C, when referencing
+                an array by index, the variable is automatically dereferenced (ie: you dont need to use a star).
+                For clarity, I will copy the variable x over to an mxArray pointer named xData (This does not need
+                to be done for the code to work).
+            </para>
+            <example id="ex2">
+                <code display="block" id="idp2294592">
+//---Inside mexFunction---
+
+//Declarations
+mxArray *xData;
+double *xValues;
+int i,j;
+int rowLen, colLen;
+double avg;
+
+//Copy input pointer x
+xData = prhs[0];
+
+//Get matrix x
+xValues = mxGetPr(xData);
+rowLen = mxGetN(xData);
+colLen = mxGetM(xData);
+
+//Print the integer avg of each col to matlab console
+for(i=0;i&lt;rowLen;i++)
+{
+    avg=0;
+    for(j=0;j&lt;colLen;j++)
+    {
+        avg += xValues[(i*colLen)+j];
+        //Another Method:
+        //
+        //avg += *xValues++;
+    }
+    avg = avg/colLen;
+    printf("The average of row %d, is %d",i,(int)avg);
+}
+                </code>
+            </example>
+            <para id="para8">
+                The function <code>mxGetPr</code> is used to get a pointer to the real data xData.  This function takes a
+                pointer to an mxArray as the intput paramter, and returns a pointer array of doubles.  A similar function
+                <code>mxGetPi</code> can be used for complex data. <code>mxGetN</code> and <code>mxGetM</code> return
+                integers of the lengths of the row and column in the matrix.  If this were an array of data, one of these
+                return values would be zero.  MATLAB gives the matrix as rows first, then columns (if you were to traverse
+                the matrix linearly) so to jump by position, (x,y) maps to x*colLen+y.  MATLAB organizes
+                its arrays this way to reduce cache misses when the row traversal is on the outside loop.  It is good to 
+                code it this way if you are working for efficiency.  <code>printf()</code>
+                will print out to the MATLAB command prompt.
+            </para>
+            <para id="para9">
+                Getting a string is very similar, but has its own method. The example below shows the procedure for getting
+                a string.  Again, I will copy the input to a pointer called yData.
+            </para>
+            <example id="ex3">
+            <code display="block" id="idp1671920">
+//---Inside mexFunction---
+
+//Declarations
+mxArray *yData;
+int yLength;
+char *TheString;
+
+//Copy input pointer y
+yData = prhs[1];
+
+//Make "TheString" point to the string
+yLength = mxGetN(yData)+1;
+TheString = mxCalloc(yLength, sizeof(char)); //mxCalloc is similar to malloc in C
+mxGetString(yData,TheString,yLength);
+            </code>
+            </example>
+            <para id="para10">
+                This last example shows how to get a simple integer.  This is the method that has always worked
+                for me, but it seems kind of strange so I imagine there is another way to do this.
+            </para>
+            <example id="ex4">
+            <code display="block" id="idp1443632">
+//---Inside mexFunction---
+
+//Declarations
+mxArray *zData;
+int Num;
+
+//Copy input pointer z
+zData = prhs[2];
+
+//Get the Integer
+Num = (int)(mxGetScalar(zData));
+
+//print it out on the screen
+printf("Your favorite integer is: %d",Num);
+            </code>
+            </example>
+            <para id="para11">
+                Three data types have been shown here.  There are several others and the MATLAB help as well
+                as the MATLAB example code shows how to use them.  Now to export the data....
+            </para>
+        </section>
+        <section id="idm5961552">
+            <title>Returning Data to MATLAB</title>
+            <para id="para12">
+                Assigning return values and data to the left hand side parameters is very similar to getting
+                the data from the last section.  The difference here is that memory must be allocated for the
+                data strucure being used on the output.  Here is an example of how to return a 2-D matrix. This code
+                will take the input x and return a copy of the matrix to z0 with every point in x multiplied by 2.
+                Note that I am not copying the name of the output mxArray pointer into another variable.
+            </para>
+            <example id="ex5">
+            <code display="block" id="idp2871312">
+//---Inside mexFunction---
+
+//Declarations
+mxArray *xData;
+double *xValues, *outArray;
+int i,j;
+int rowLen, colLen;
+
+//Copy input pointer x
+xData = prhs[0];
+
+//Get matrix x
+xValues = mxGetPr(xData);
+rowLen = mxGetN(xData);
+colLen = mxGetM(xData);
+
+//Allocate memory and assign output pointer
+plhs[0] = mxCreateDoubleMatrix(colLen, rowLen, mxREAL); //mxReal is our data-type
+
+//Get a pointer to the data space in our newly allocated memory
+outArray = mxGetPr(plhs[0]);
+
+//Copy matrix while multiplying each point by 2
+for(i=0;i&lt;rowLen;i++)
+{
+    for(j=0;j&lt;colLen;j++)
+    {
+        outArray[(i*colLen)+j] = 2*xValues[(i*colLen)+j];
+    }
+}
+            </code>
+            </example>
+        </section>
+    </section>
+    <section id="idm6993056">
+        <title>Calling Built-In Functions from a MEX-File</title>
+        <para id="para13">
+            While it may be nice to write functions in C, there are so many useful and fast pre-written
+            functions in MATLAB that it would be a crime if we could not use them.  Luckily,
+            The Mathworks (creators of MATLAB) has provided this capability. Built-In functions have a parameter list
+            similar to the mexFunction itself.  This example uses the built-in function z = conv(x,y);
+        </para>
+        <example id="ex6">
+        <code display="block" id="idp1598992">
+//---Inside mexFunction---
+
+//Declarations
+mxArray *result;
+mxArray *arguments[2];
+
+//Fill in the input parameters with some trash
+arguments[0] = mxCreateDoubleMatrix(1, 20, mxREAL);
+arguments[1] = mxCreateDoubleMatrix(1, 10, mxREAL);
+
+//In the real world I imagine you would want to actually put
+//some useful data into the arrays above, but for this example
+//it doesnt seem neccesary.
+
+//Call the Function
+mexCallMATLAB(1,&amp;result,2,arguments,"conv");
+
+//Now result points to an mxArray and you can extract the data as you please!
+        </code>
+        </example>
+    </section>
+    <section id="idp3444032">
+        <title>Compiling</title>
+        <para id="para14">
+            Compiling the MEX-Files is similar to compiling with gcc or any other command line
+            compiler.  In the MATLAB command prompt, change your current directory to the 
+            location of the MEX source file.  Type: <code>mex filename.c</code> into the MATLAB
+            command window.  MATLAB may ask you to choose a compiler.  Choose the compiler with MATLAB in its directory path. 
+            Your function will be called with the same name as your file. (ex: <code>mex jasonsFunction.c</code>
+            produces a function that can be called from MATLAB as <code>[z0,z1] = jasonsFunction(x,y,z);</code>)
+        </para>
+        <para id="para15">
+            After compiling MATLAB produces the actual MEX binary that can be called as a normal MATLAB function.  To call
+            this function, you must be in the same directory with the binary.  The binary goes by different names
+            depending what system you compiled the source on (ex: Windows=.dll MacOSX=.mexmac Solaris=.mexsol Linux=.mexlx).
+            Your MEX-function will have to be compiled on each type of system that you want to run it on because the 
+            binaries are operating system specific.
+        </para>
+    </section>
+    <section id="idm7014144">
+        <title>Other Useful Functions</title>
+        <para id="end">
+            Here is a nice list of useful functions in the mex library that make life a lot
+            easier.  Most of these work in similar fashion to those functions described above.  The full list can be found in
+            the MATLAB help documentation with many examples.  There are also some example files in the MATLAB
+            extern directory (MATLAB/extern/examples/mx or mex).
+        </para>
+        <list id="last">
+            <item>mxDuplicateArray</item>
+            <item>mexErrMsgTxt</item>
+            <item>mxMalloc</item>
+            <item>mxRealloc</item>
+            <item>mxCreateString</item>
+            <item>mxDestroyArray</item>
+            <item>mxFree</item>
+            <item>mxGetCell</item>
+            <item>mxGetData</item>
+            <item>and many more...</item>
+        </list>
+    </section>
+  </content>
+  
+</document>
